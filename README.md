@@ -1,132 +1,137 @@
-# [中文](./README.zh-Hant.md)
+# [English](./README_EN.md)
 
 # Threads Scraper Output
 
-This folder stores the dedicated Threads scraping output package.
+本資料夾用於存放專屬的 Threads 爬蟲輸出套件。
 
-Contents:
+## 內容
 
 - `skills/threads-scraper-toolkit/`
 - `requirements.txt`
 - `HANDOFF.md`
-- default command output folders:
+- 預設輸出資料夾：
   - `outputs/scrape-post/`
   - `outputs/scrape-user/`
   - `outputs/search-keyword/`
-  - each folder is kept in git only with `.gitkeep`; generated data stays ignored
+  - Git 僅保留 `.gitkeep`；實際產生的資料檔案會由 `.gitignore` 忽略
 
-The package is portable. The CLI resolves its package root from `__file__`,
-so it can be copied to another repo without rewriting hardcoded paths.
-All toolkit-generated `md` and `json` outputs are written as UTF-8, including on Windows.
-Saved outputs always follow the default order: `{output_root}/{command_name}/{filename}`.
+## 基本規則
 
-Primary CLI from this folder:
+- 本套件具備可攜性：CLI 會根據 `__file__` 自動定位 package root，複製到其他 repo 後毋須修改硬編碼路徑
+- 所有 toolkit 產生的 `md` 與 `json` 檔案均固定採用 UTF-8 編碼
+- 所有儲存輸出皆固定遵循以下結構：
+  - `{output_root}/{command_name}/{filename}`
+
+主要 CLI：
 
 ```powershell
 $toolkit = Resolve-Path .\skills\threads-scraper-toolkit\scripts\threads_scraper_cli.py
 python $toolkit ... --format md --output auto
 ```
 
-If a custom saved filename is needed, pass a filename only. The toolkit still writes it under the command folder:
+如需自訂輸出檔名，只需提供檔名即可；toolkit 仍會自動將檔案寫入對應的 command 資料夾：
 
 ```powershell
 python $toolkit --format md scrape-user --profile-url "https://www.threads.com/@user" --max-posts 10 --output "cat_themove_recent10.md"
 ```
 
-## User Examples
+## 可供使用者執行的操作
 
-Users can drive the toolkit by giving links or keywords. No code edit is needed.
-
-1. Scrape one specific Threads post from a direct post link.
+1. 提供單一 Threads 文章連結，擷取該篇文章內容。
 
 ```powershell
 $toolkit = Resolve-Path .\skills\threads-scraper-toolkit\scripts\threads_scraper_cli.py
 python $toolkit --format md scrape-post --url "https://www.threads.com/@user/post/SHORTCODE" --output auto
 ```
 
-2. Scrape the most recent `N` posts from a specific Threads profile link.
+2. 提供 Threads 個人頁面連結，擷取指定使用者最近 `N` 篇文章。
 
 ```powershell
 $toolkit = Resolve-Path .\skills\threads-scraper-toolkit\scripts\threads_scraper_cli.py
 python $toolkit --format md scrape-user --profile-url "https://www.threads.com/@user" --max-posts 10 --output auto
 ```
 
-If full body is needed for the collected posts:
+如需一併補上文章 body：
 
 ```powershell
 python $toolkit --format md scrape-user --profile-url "https://www.threads.com/@user" --max-posts 10 --include-body --body-limit 10 --output auto
 ```
 
-3. Search one profile link for posts that match a keyword.
+3. 提供個人頁面連結與關鍵字，搜尋該使用者的命中文章。
 
 ```powershell
 $toolkit = Resolve-Path .\skills\threads-scraper-toolkit\scripts\threads_scraper_cli.py
 python $toolkit --format md search-keyword --profile-url "https://www.threads.com/@user" --keyword "隨手筆記" --output auto
 ```
 
-If matched posts should include full body text:
+如需一併補上命中文章的 body：
 
 ```powershell
 python $toolkit --format md search-keyword --profile-url "https://www.threads.com/@user" --keyword "隨手筆記" --include-body --body-limit 10 --output auto
 ```
 
-Regex search is also supported:
+亦支援 Regex 搜尋：
 
 ```powershell
 python $toolkit --format json search-keyword --profile-url "https://www.threads.com/@user" --keyword "LGBTQ|吃瓜" --regex --output auto
 ```
 
-## Capability Matrix
+## 功能矩陣
 
-| Content type | Current support | Primary detection | Primary strategy | Fallback |
+| 內容類型 | 目前支援 | 主要判斷方式 | 主要策略 | 備援 |
 | --- | --- | --- | --- | --- |
-| Single text post | Good | `threads.com/@user/post/...` URL | rendered DOM + HTML/meta extraction | profile snippet fallback |
-| Shared article / link card | Good | post body or meta looks like external URL | article-carrier extraction | rendered DOM text |
-| Continuation chain / multi-post thread | Partial-good | post text contains continuation markers | scrape first post, then merge adjacent profile posts | stop at single post if continuation cannot be proven |
-| Profile-wide post collection | Good | profile URL or username input | DOM profile crawl | GraphQL page capture when available |
-| Profile keyword search | Good | keyword over collected profile posts | filter collected snippets first | optional body attach for matched posts only |
+| 單篇文字文章 | 良好 | `threads.com/@user/post/...` URL | rendered DOM + HTML/meta extraction | profile snippet fallback |
+| 分享文章 / link card | 良好 | body 或 meta 呈現外部連結特徵 | article-carrier extraction | rendered DOM text |
+| 連續串文 / 多篇 thread | 中上 | 文字包含 continuation markers | 先擷取第一篇，再合併相鄰 profile posts | 如無法證明為串文，則停留於單篇 |
+| 整體個人頁面收集 | 良好 | profile URL / username | DOM profile crawl | GraphQL page capture（可用時） |
+| 個人頁面關鍵字搜尋 | 良好 | 對 collected posts 執行 keyword filter | 先 filter snippet | 命中後可選擇補 body |
 
-## Strategy Flow
+## 策略流程
 
-The scraper does not blindly run every method for every post.
+爬蟲並非對每篇文章一律執行所有方法，而是依以下順序處理：
 
-It uses this order:
+1. 先判斷目標為文章 URL，或為 profile crawl / search 任務
+2. 若為文章 URL，則先抓取 rendered DOM 與 raw HTML
+3. 再進一步分類為：
+   - 一般文字文章
+   - 分享文章 / link card
+   - 疑似 continuation chain
+4. 優先使用最適合該類型的 extractor
+5. 若結果偏弱，則退回其他來源，例如 profile snippet
+6. 僅於偵測到 continuation marker 時，才會嘗試將相鄰 posts 合併為同一串內容
 
-1. Detect whether the target is a post URL or a profile crawl/search task.
-2. For a post URL, fetch rendered DOM and raw HTML.
-3. Classify the post as:
-   - ordinary text post
-   - shared article / link card
-   - possible continuation chain
-4. Use the best-fit extractor first.
-5. If the result is weak, fall back to another source such as profile snippet text.
-6. Only if continuation markers are found will the scraper try to merge adjacent posts into one chain.
+## 目前已支援的主要功能
 
-## Supported Functions
+以下三項功能均已支援：
 
-The three functions you listed are all supported now:
+1. 使用特定文章連結擷取單篇內容：`scrape-post`
+2. 使用特定 profile 連結擷取最近 `N` 篇文章：`scrape-user --profile-url ... --max-posts N`
+3. 使用特定 profile 連結搭配關鍵字搜尋命中文章：`search-keyword --profile-url ... --keyword ...`
 
-1. A user can give one specific post link and scrape that single post with `scrape-post`.
-2. A user can give another user's profile link and scrape the recent `N` posts with `scrape-user --profile-url ... --max-posts N`.
-3. A user can give another user's profile link plus a keyword and scrape matched posts with `search-keyword --profile-url ... --keyword ...`.
+## 其他已支援但先前未清楚列示的功能
 
-## Other Supported Features Not Previously Written Clearly
+- profile 輸入可使用 `--profile`、`--profile-url` 或 `--username`
+- 輸出格式可選 `json` / `md`
+- `--output auto` 可自動存檔
+- `--output-root` 或環境變數 `THREADS_SCRAPER_OUTPUT_ROOT` 可切換輸出根目錄
+- 所有儲存檔案均固定寫入 `{output_root}/{command_name}/...`
+- `--include-body` 可補抓文章 body
+- `--body-limit` 可限制補抓 body 的數量
+- `search-keyword --regex` 支援 Regex 搜尋
+- `--max-scrolls` 與 `--scroll-pause-ms` 可調整 crawl 深度與節奏
+- `--headful` 可開啟可見瀏覽器，用於處理 headless 與一般 session 表現不一致的情況
 
-- Accept profile input as `--profile`, `--profile-url`, or `--username`.
-- Return either `json` or `md` with `--format`.
-- Save outputs automatically under this package with `--output auto`.
-- Save outputs to another base folder with `--output-root` or env `THREADS_SCRAPER_OUTPUT_ROOT`.
-- Keep all saved files under the fixed command order `{output_root}/{command_name}/...`.
-- Add full post body to profile collection or keyword results with `--include-body`.
-- Limit how many matched posts get body expansion with `--body-limit`.
-- Use regex instead of plain keyword matching with `search-keyword --regex`.
-- Tune crawl depth and pacing with `--max-scrolls` and `--scroll-pause-ms`.
-- Run a visible browser with `--headful` for cases where headless behavior differs from a normal session.
+## 目前限制
 
-## Current Limits
+- 串文判斷依賴 continuation markers；若作者未清楚標示，未必能自動合併
+- profile 可見歷史深度取決於 Threads 對當前 browser session 開放的資料量
+- GraphQL capture 屬 opportunistic，無法保證每次皆可取得
+- 最新文章有時會晚於登入狀態下的人眼可見 timeline；公開 feed 與可見畫面可能不一致
+- 若 Threads 調整 DOM 或 response 行為，部分策略可能退化，需另行更新
 
-- Continuation chains depend on detectable continuation markers. If the author does not signal continuation clearly, chain merge may not trigger.
-- Profile history depth depends on what Threads exposes to the browser session. Some older posts may not be available from the public page.
-- GraphQL capture is opportunistic, not guaranteed. When unavailable, the scraper falls back to DOM collection only.
-- Newest posts may sometimes lag behind what a logged-in human session can see. Public profile feed and browser-visible feed can be stale or inconsistent.
-- If Threads changes DOM structure or response behavior, one or more strategies may degrade until updated.
+## 風險說明
+
+- 若目前工具以「未登入狀態」抓取公開內容，通常不存在直接導致帳號被封鎖的風險，因為並未綁定特定使用者帳號
+- 但即使未登入，仍然存在被限流、封鎖 IP、回傳舊快取資料、要求驗證或暫時拒絕存取的風險
+- 若未來改為登入態抓取，或以過高頻率大量請求，帳號風險與平台風控風險都會顯著提高
+- 因此，現階段較實際的主要風險不是「封帳號」，而是「被偵測為自動化流量後遭限流或封鎖來源」
