@@ -29,6 +29,53 @@ $toolkit = Resolve-Path .\skills\threads-scraper-toolkit\scripts\threads_scraper
 python $toolkit ... --format md --output auto
 ```
 
+## AI Skill 使用方式與提示詞範例
+
+本套件可由 AI 直接調用，使用者毋須自行修改 Python 程式碼內的帳號、關鍵字或輸出路徑。當 AI 已載入本 skill 後，可直接使用自然語言下達任務。
+
+### 範例一：下載指定文章
+
+使用者需求：
+
+```text
+下載 https://www.threads.com/@lo2cin4/post/DWoYX8ZD7hB?hl=zh-hk 這篇文章
+```
+
+AI 可使用的提示詞：
+
+```text
+請使用 threads-scraper-toolkit 下載這篇 Threads 文章，輸出為 Markdown，並存入預設輸出資料夾：
+https://www.threads.com/@lo2cin4/post/DWoYX8ZD7hB?hl=zh-hk
+```
+
+### 範例二：下載指定使用者最近 N 篇文章
+
+使用者需求：
+
+```text
+下載 https://www.threads.com/@lo2cin4 最近 N 篇文章
+```
+
+AI 可使用的提示詞：
+
+```text
+請使用 threads-scraper-toolkit 下載 https://www.threads.com/@lo2cin4 最近 10 篇 Threads 文章，輸出為 Markdown，並存入預設輸出資料夾。
+```
+
+### 範例三：下載指定使用者含關鍵字的最近 N 篇文章
+
+使用者需求：
+
+```text
+下載 https://www.threads.com/@lo2cin4 含關鍵字「量化」的最近 N 篇文章
+```
+
+AI 可使用的提示詞：
+
+```text
+請使用 threads-scraper-toolkit 搜尋 https://www.threads.com/@lo2cin4 最近 20 篇文章中含有「量化」的內容，輸出為 Markdown，並存入預設輸出資料夾。
+```
+
 如需自訂輸出檔名，只需提供檔名即可；toolkit 仍會自動將檔案寫入對應的 command 資料夾：
 
 ```powershell

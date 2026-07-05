@@ -27,6 +27,55 @@ $toolkit = Resolve-Path .\skills\threads-scraper-toolkit\scripts\threads_scraper
 python $toolkit ... --format md --output auto
 ```
 
+## AI Skill Usage And Prompt Examples
+
+This toolkit can be driven directly by AI. The user does not need to edit Python code to change usernames, keywords, or output paths. Once the skill is loaded, the AI can take natural-language instructions and translate them into the correct toolkit command.
+
+### Example 1: Download One Specific Post
+
+User request:
+
+```text
+Download this Threads post:
+https://www.threads.com/@lo2cin4/post/DWoYX8ZD7hB?hl=zh-hk
+```
+
+Prompt the AI can use:
+
+```text
+Use threads-scraper-toolkit to download this Threads post, save the result as Markdown, and write it into the default output folder:
+https://www.threads.com/@lo2cin4/post/DWoYX8ZD7hB?hl=zh-hk
+```
+
+### Example 2: Download The Recent N Posts From One Profile
+
+User request:
+
+```text
+Download the recent N posts from:
+https://www.threads.com/@lo2cin4
+```
+
+Prompt the AI can use:
+
+```text
+Use threads-scraper-toolkit to download the most recent 10 Threads posts from https://www.threads.com/@lo2cin4, save the result as Markdown, and write it into the default output folder.
+```
+
+### Example 3: Download The Recent N Posts Matching A Keyword
+
+User request:
+
+```text
+Download the recent N posts from https://www.threads.com/@lo2cin4 that contain the keyword "量化"
+```
+
+Prompt the AI can use:
+
+```text
+Use threads-scraper-toolkit to search the most recent 20 posts from https://www.threads.com/@lo2cin4 for the keyword "量化", save the result as Markdown, and write it into the default output folder.
+```
+
 If a custom saved filename is needed, pass a filename only. The toolkit still writes it under the command folder:
 
 ```powershell
