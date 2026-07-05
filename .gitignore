@@ -1,0 +1,14 @@
+outputs/*
+!outputs/scrape-post/
+!outputs/scrape-user/
+!outputs/search-keyword/
+outputs/scrape-post/*
+!outputs/scrape-post/.gitkeep
+outputs/scrape-user/*
+!outputs/scrape-user/.gitkeep
+outputs/search-keyword/*
+!outputs/search-keyword/.gitkeep
+
+skills/**/__pycache__/
+skills/**/*.pyc
+.pytest_cache/
