@@ -1,3 +1,5 @@
+# [中文](./README.zh-Hant.md)
+
 # Threads Scraper Output
 
 This folder stores the dedicated Threads scraping output package.
